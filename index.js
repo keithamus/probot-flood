@@ -1,30 +1,32 @@
 /* eslint-disable no-labels */
+const minuteCreatedAt = obj => Math.round(Date.parse(obj['created_at']) / 60000) * 60000
+const incKey = (obj, key) => {
+  obj[key] = (obj[key] || 0) + 1
+  return obj[key]
+}
+
+async function hasTheReactionFloodBegun (context, {id}, reactionsPerMinute) {
+  const minuteMap = {}
+  let flooding = false
+  await context.github.paginate(await context.github.reactions.getForIssueComment(context.repo({ id })), async ({ data: reactions }, done) => {
+    flooding = reactions.some(reaction => incKey(minuteMap, minuteCreatedAt(reaction)) >= reactionsPerMinute)
+    if (flooding) return done()
+  })
+  return flooding
+}
+
 async function hasTheCommentFloodBegun (context, commentsPerMinute, reactionsPerMinute) {
-  let commentMinutes = {}
-  let reactionMinutes = {}
-  let page = -1
-  while (true) {
-    const {data: comments} = await context.github.issues.getComments(context.issue({ page: page += 1, per_page: 100 }))
-    for (const comment of comments) {
-      const minute = new Date(Math.round(Date.parse(comment['created_at']) / 60000) * 60000)
-      commentMinutes[minute] = (commentMinutes[minute] || 0) + 1
-      if (commentMinutes[minute] > commentsPerMinute) return true
-      if (reactionsPerMinute) {
-        const id = comment.id
-        doReactions: while (true) {
-          const {data: reactions} = await context.github.reactions.getForIssueComment(context.repo({ id }))
-          for (const reaction of reactions) {
-            const minute = new Date(Math.round(Date.parse(reaction['created_at']) / 60000) * 60000)
-            reactionMinutes[minute] = (reactionMinutes[minute] || 0) + 1
-            if (reactionMinutes[minute] > reactionsPerMinute) return true
-          }
-          if (reactions.length < 100) break doReactions
-        }
-      }
+  const minuteMap = {}
+  let flooding = false
+  await context.github.paginate(context.github.issues.getComments(), async ({ data: comments }, done) => {
+    flooding = comments.some(comment => incKey(minuteMap, minuteCreatedAt(comment)) >= commentsPerMinute)
+    if (!flooding && reactionsPerMinute) {
+      flooding = (await Promise.all(comments.map(comment => hasTheReactionFloodBegun(context, comment, reactionsPerMinute))))
+        .some(Boolean)
     }
-    if (comments.length < 100) break
-  }
-  return false
+    if (flooding) return done()
+  })
+  return flooding
 }
 
 module.exports = (robot) => {
@@ -35,7 +37,7 @@ module.exports = (robot) => {
       issueLockMessage: 'This issue is seeing a lot of traffic, so we\'re going to lock it for now to just collobarators'
     })
 
-    if ((commentsPerMinute || reactionsPerMinute) && hasTheCommentFloodBegun(context, commentsPerMinute, reactionsPerMinute)) {
+    if ((commentsPerMinute || reactionsPerMinute) && await hasTheCommentFloodBegun(context, commentsPerMinute, reactionsPerMinute)) {
       await context.github.issues.createComment(context.issue({body: issueLockMessage}))
       await context.github.issues.lock(context.issue())
     }
