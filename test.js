@@ -73,7 +73,7 @@ describe('probot-flood', () => {
         owner: 'bar',
         repo: 'foo',
         number: 1,
-        body: 'This issue is seeing a lot of traffic, so we\'re going to lock it for now to just collobarators'
+        body: 'This issue is seeing a lot of traffic, so we\'re going to lock it for now to just collaborators'
       })
     })
 
@@ -116,7 +116,7 @@ describe('probot-flood', () => {
         owner: 'bar',
         repo: 'foo',
         number: 1,
-        body: 'This issue is seeing a lot of traffic, so we\'re going to lock it for now to just collobarators'
+        body: 'This issue is seeing a lot of traffic, so we\'re going to lock it for now to just collaborators'
       })
     })
 
