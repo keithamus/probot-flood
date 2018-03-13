@@ -21,5 +21,5 @@ commentsPerMinute: 10,
 # How many reactions per minute are allowed before probot-flood locks the issue (0 to disable)
 reactionsPerMinute: 0, 
 # The message the bot will post before it locks the issue
-issueLockMessage: This issue is seeing a lot of traffic, so we're going to lock it for now to just collobarators
+issueLockMessage: This issue is seeing a lot of traffic, so we're going to lock it for now to just collaborators
 ```

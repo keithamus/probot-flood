@@ -34,7 +34,7 @@ module.exports = (robot) => {
     const {commentsPerMinute, reactionsPerMinute, issueLockMessage} = await context.config('probot-flood.yml', {
       commentsPerMinute: 10,
       reactionsPerMinute: 0,
-      issueLockMessage: 'This issue is seeing a lot of traffic, so we\'re going to lock it for now to just collobarators'
+      issueLockMessage: 'This issue is seeing a lot of traffic, so we\'re going to lock it for now to just collaborators'
     })
 
     if ((commentsPerMinute || reactionsPerMinute) && await hasTheCommentFloodBegun(context, commentsPerMinute, reactionsPerMinute)) {
